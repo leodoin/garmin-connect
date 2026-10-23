@@ -4,7 +4,7 @@
 2. Set setup command to `bash scripts/cloud-setup.sh`. The environment needs package download access during setup. It does not need Garmin credentials, an OpenAI runtime key, SSH keys, or GCP credentials.
 3. Run setup and verify tests, then publish the environment.
 4. On iPhone, open Codex in ChatGPT, choose Cloud and the published environment, and describe a change. Review the diff and tests, then commit or open a pull request.
-5. Deployment to the existing GCP service is separate. Merging code alone does not update the service.
+5. Deployment to the existing GCP service is a manual GitHub Action: **Actions → Deploy to GCP → Run workflow**, selecting `main`. It tests, stages a release, restarts and verifies the service, and rolls back on failure. Merging code alone does not update the service. After schema changes, refresh tools in ChatGPT plugin settings.
 
 Suggested request: “Add a read-only Garmin metric to get_health_history. Follow AGENTS.md, add regression coverage, run tests, and open a pull request. Do not change production.”
 

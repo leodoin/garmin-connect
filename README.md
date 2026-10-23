@@ -8,7 +8,7 @@ The personal instance runs on a Google Cloud VM using `deploy/gcp/garmin-mcp.ser
 
 For development from iPhone, connect this repository to a Codex Cloud environment on web/desktop, run `bash scripts/cloud-setup.sh` during setup, test with `uv run --frozen --extra dev pytest -q`, and publish the environment. Then select that environment in Codex in the ChatGPT mobile app. Development tests use mock data and require no Garmin or GCP credentials.
 
-Changes committed to GitHub do not automatically deploy to the running VM. Review changes and tests before deploying. After tool descriptions or input schemas change, use **Refresh tools** in the Personal Garmin History settings in ChatGPT, then verify with actual tool calls. Server-side tests alone do not verify ChatGPT's cached schema.
+Changes committed to GitHub do not automatically deploy to the running VM. To deploy reviewed main-branch code, run **Actions → Deploy to GCP → Run workflow**. The deployment tests first, uses short-lived Google identity, preserves credentials, and rolls back on failed health checks. After tool descriptions or input schemas change, use **Refresh tools** in the Personal Garmin History settings in ChatGPT, then verify with actual tool calls. Server-side tests alone do not verify ChatGPT's cached schema.
 
 See [cloud development](docs/cloud-development.md) and [GCP deployment](deploy/gcp/README.md).
 
