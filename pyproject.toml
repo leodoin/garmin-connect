@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "personal-garmin-mcp"
+version = "0.1.0"
+description = "Read-only personal Garmin history tools for ChatGPT"
+requires-python = ">=3.12"
+dependencies = ["fastmcp==2.14.7", "garminconnect==0.3.19", "curl_cffi>=0.16,<0.17", "python-dotenv>=1,<2"]
+
+[project.optional-dependencies]
+dev = ["pytest>=9,<10", "pytest-asyncio>=1,<2"]
+
+[project.scripts]
+garmin-mcp = "garmin_mcp.server:main"
+garmin-login = "garmin_mcp.login:main"
+garmin-mcp-local = "garmin_mcp.local:main"
+garmin-setup = "garmin_mcp.local_setup:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/garmin_mcp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

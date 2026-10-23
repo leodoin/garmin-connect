@@ -1,0 +1,28 @@
+[Unit]
+Description=Personal Garmin MCP private OpenAI tunnel
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/garmin-mcp/runtime-key
+
+[Service]
+Type=simple
+User=garmin-mcp
+Group=garmin-mcp
+WorkingDirectory=/opt/garmin-mcp
+ExecStart=/opt/garmin-mcp/bin/tunnel-client run --config /etc/garmin-mcp/tunnel.yaml
+LoadCredential=runtime-key:/etc/garmin-mcp/runtime-key
+Environment=PYTHONUNBUFFERED=1
+Environment=GARMIN_TOKEN_DIR=/var/lib/garmin-mcp/garmin
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/garmin-mcp
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target
