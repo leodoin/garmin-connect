@@ -42,9 +42,10 @@ jobs:
       - name: Package reviewed source
         run: git archive --format=tar.gz --output="$RUNNER_TEMP/garmin-source.tar.gz" "$GITHUB_SHA"
       - name: Upload through IAP
+        timeout-minutes: 3
         run: |
           gcloud compute scp "$RUNNER_TEMP/garmin-source.tar.gz" "garminadmin@${GCP_VM}:/tmp/garmin-${GITHUB_SHA}.tar.gz" \
-            --project="$GCP_PROJECT" --zone="$GCP_ZONE" --tunnel-through-iap --ssh-key-expire-after=30m --quiet
+            --project="$GCP_PROJECT" --zone="$GCP_ZONE" --tunnel-through-iap --ssh-key-expire-after=30m --scp-flag=-O --quiet
       - name: Deploy and verify, rolling back on failure
         run: |
           gcloud compute ssh "garminadmin@${GCP_VM}" \
