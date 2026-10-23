@@ -45,6 +45,12 @@ def create_server(history: History, auth=None) -> FastMCP:
         return history.call("get_activity", str(activity_id))
 
     @server.tool(annotations=annotations)
+    def get_activity_samples(activity_id: int, max_points: int = 2000,
+                             interval_seconds: int | None = None) -> dict:
+        """Read timestamped heart rate, pace (seconds/km), cadence (Garmin units), power and elevation. No GPS, routes or account data. Null is unavailable. Optional interval_seconds (1–86400) selects observations at least that far apart; max_points (2–10000) then evenly thins them, retaining endpoints. Garmin may simplify upstream chart data. Timestamps and health measurements are sensitive."""
+        return history.get_activity_samples(activity_id, max_points, interval_seconds)
+
+    @server.tool(annotations=annotations)
     def get_health_history(metric: Metric, start_date: str, end_date: str) -> dict:
         """Read daily Garmin health and fitness history on inclusive YYYY-MM-DD dates: summary, sleep, heart_rate, stress, hrv, vo2_max (running/cycling when available), training_load (status and acute/chronic load), training_load_focus (trailing four weeks), training_readiness, weight (weigh-ins), body_composition, or fitness_age. Maximum 31 days per call; use smaller windows for detailed data. Missing device-supported metrics are unavailable, not zero. Weight may be in grams; preserve upstream units."""
         return history.health(metric, start_date, end_date)

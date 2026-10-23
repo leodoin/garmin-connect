@@ -6,6 +6,8 @@ from typing import Literal
 from fastmcp.exceptions import ToolError
 from garminconnect import Garmin
 
+from .samples import CHART_LIMIT, decode_samples
+
 Metric = Literal["summary", "sleep", "heart_rate", "stress", "hrv", "vo2_max", "training_load", "training_load_focus", "training_readiness", "weight", "body_composition", "fitness_age"]
 METHODS = {
     "summary": "get_stats", "sleep": "get_sleep_data",
@@ -64,6 +66,17 @@ class History:
                 "offset": offset, "next_offset": offset + len(items) if len(items) == limit else None,
                 "units": {"distance": "meters", "duration": "seconds", "speed": "meters/second"},
                 "note": "Newest first. Continue with next_offset until null to retrieve older history."}
+
+    def get_activity_samples(self, activity_id: int, max_points: int = 2000,
+                             interval_seconds: int | None = None) -> dict:
+        if type(activity_id) is not int or activity_id <= 0:
+            raise ToolError("activity_id must be a positive integer.")
+        if type(max_points) is not int or not 2 <= max_points <= CHART_LIMIT:
+            raise ToolError(f"max_points must be an integer from 2 to {CHART_LIMIT}.")
+        if interval_seconds is not None and (type(interval_seconds) is not int or not 1 <= interval_seconds <= 86400):
+            raise ToolError("interval_seconds must be an integer from 1 to 86400, or null.")
+        data = self.call("get_activity_details", str(activity_id), maxchart=CHART_LIMIT, maxpoly=0)
+        return {"activity_id": activity_id, **decode_samples(data, max_points, interval_seconds)}
 
     def health(self, metric: Metric, start_date: str, end_date: str):
         dates = date_range(start_date, end_date)

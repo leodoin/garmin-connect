@@ -26,7 +26,7 @@ Open `http://127.0.0.1:8766`. Complete Garmin login/MFA there, then enter your p
 
 In ChatGPT, add a custom MCP server with Connection **Tunnel**, select the same tunnel, and use **No authentication** for the private stdio transport. Access is controlled by the tunnel's Platform organization and ChatGPT workspace associations. Only associate your own intended workspace. Keep the Mac awake and the tunnel running.
 
-The three read-only tools run as `.venv/bin/python -m garmin_mcp.local`, launched by the official tunnel supervisor. There is no MCP TCP listener in this mode. The separate local setup page handles credential entry only. Check or stop the managed runtime:
+The four read-only tools run as `.venv/bin/python -m garmin_mcp.local`, launched by the official tunnel supervisor. There is no MCP TCP listener in this mode. The separate local setup page handles credential entry only. Check or stop the managed runtime:
 
 ```sh
 .data/bin/tunnel-client runtimes status personal-garmin --json
@@ -38,7 +38,12 @@ After a reboot or a stopped tunnel, reopen the local setup page and enter the ru
 Tools:
 - `list_activities`: page all historical workouts, newest first (up to 100 per call). Continue with `next_offset` until null. Coordinates are omitted from the list.
 - `get_activity`: full workout summary by activity ID; may include location details.
+- `get_activity_samples(activity_id, max_points=2000, interval_seconds=None)`: UTC timestamped heart rate (bpm), pace (seconds/km), cadence (Garmin values and unit labels), power (watts), and elevation (meters). Coordinates, routes, account identifiers, and raw descriptors are excluded. No sample data is logged or persisted by this tool. Timestamps and health measurements remain sensitive.
 - `get_health_history`: daily summary, sleep, heart rate, stress, HRV, VO₂ max, training load, load focus, training readiness, weight, body composition, or fitness age for an inclusive window of up to 31 days. Split longer history into windows. Missing measurements are not zero.
+
+For sample downsampling, `interval_seconds` (1–86400) selects actual observations at least that far apart, starting at the first valid timestamp. Then `max_points` (2–10000) evenly thins the selected points, preserving both selected endpoints. No averaging or interpolation is performed. Use `max_points=10000` with no interval for all available chart points within the upstream cap. Garmin is asked for at most 10000 chart points and no polyline; it may simplify data before returning it, so these are not guaranteed raw device samples. `source_sample_count` counts decoded timestamped chart observations before local downsampling; `returned_sample_count` and `downsampled` describe local selection only. Rows without valid timestamps are omitted; absent, nonfinite or unsupported-unit measurements are null. Stationary pace is null; measured zero power/cadence and negative elevation are preserved. Cadence labels follow Garmin (`stepsPerMinute`, `spm`, or `rpm`); no step/stride conversion is inferred.
+
+Example: `get_activity_samples(activity_id=123, max_points=500, interval_seconds=5)`. Tests use synthetic responses only. Live summary checks do not validate chart decoding or ChatGPT's cached tool schema. After a separately authorized deployment, refresh tools and verify an actual `get_activity_samples` call before claiming end-to-end compatibility.
 
 This queries Garmin on demand; it does not yet maintain a local historical database. Old data availability depends on your account and device. Large heart-rate responses are best requested one day at a time. Garmin access uses the unofficial `garminconnect` library, not Garmin's official partner API; service changes may require updates. Only read methods are exposed, though the underlying Garmin session has broader account privileges.
 
