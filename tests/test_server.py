@@ -43,7 +43,7 @@ async def test_mcp_tools_and_calls():
     backend.get_activities.return_value = []
     async with Client(create_server(History("unused", backend))) as client:
         tools = await client.list_tools()
-        assert {t.name for t in tools} == {"list_activities", "get_activity", "get_health_history"}
+        assert {t.name for t in tools} == {"list_activities", "get_activity", "get_activity_samples", "get_health_history"}
         assert all(t.annotations.readOnlyHint for t in tools)
         result = await client.call_tool("get_health_history", {"metric": "summary", "start_date": "2024-01-01", "end_date": "2024-01-02"})
         assert len(result.data["days"]) == 2
