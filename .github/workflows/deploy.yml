@@ -39,18 +39,15 @@ jobs:
           workload_identity_provider: projects/4078144675/locations/global/workloadIdentityPools/github-garmin/providers/github
           service_account: github-garmin-deploy@garmin-connect-leodoin.iam.gserviceaccount.com
       - uses: google-github-actions/setup-gcloud@v3
-      - name: Package reviewed source
-        run: git archive --format=tar.gz --output="$RUNNER_TEMP/garmin-source.tar.gz" "$GITHUB_SHA"
-      - name: Upload through IAP
-        timeout-minutes: 3
+      - name: Verify immutable source archive
         run: |
-          gcloud compute scp "$RUNNER_TEMP/garmin-source.tar.gz" "garminadmin@${GCP_VM}:/tmp/garmin-${GITHUB_SHA}.tar.gz" \
-            --project="$GCP_PROJECT" --zone="$GCP_ZONE" --tunnel-through-iap --ssh-key-expire-after=30m --scp-flag=-O --quiet
+          curl --fail --location --retry 3 "https://github.com/leodoin/garmin-connect/archive/${GITHUB_SHA}.tar.gz" -o "$RUNNER_TEMP/garmin-source.tar.gz"
+          echo "SOURCE_SHA256=$(sha256sum "$RUNNER_TEMP/garmin-source.tar.gz" | cut -d ' ' -f 1)" >> "$GITHUB_ENV"
       - name: Deploy and verify, rolling back on failure
         run: |
           gcloud compute ssh "garminadmin@${GCP_VM}" \
             --project="$GCP_PROJECT" --zone="$GCP_ZONE" --tunnel-through-iap --ssh-key-expire-after=30m --quiet \
-            --command="set -e; mkdir -p /tmp/garmin-deploy-${GITHUB_SHA}; tar -xzf /tmp/garmin-${GITHUB_SHA}.tar.gz -C /tmp/garmin-deploy-${GITHUB_SHA} deploy/gcp/deploy-release.sh; sudo bash /tmp/garmin-deploy-${GITHUB_SHA}/deploy/gcp/deploy-release.sh /tmp/garmin-${GITHUB_SHA}.tar.gz ${GITHUB_SHA}"
+            --command="set -e; curl --fail --location --retry 3 https://github.com/leodoin/garmin-connect/archive/${GITHUB_SHA}.tar.gz -o /tmp/garmin-${GITHUB_SHA}.tar.gz; echo '${SOURCE_SHA256}  /tmp/garmin-${GITHUB_SHA}.tar.gz' | sha256sum -c -; mkdir -p /tmp/garmin-deploy-${GITHUB_SHA}; tar -xzf /tmp/garmin-${GITHUB_SHA}.tar.gz --strip-components=1 -C /tmp/garmin-deploy-${GITHUB_SHA}; sudo bash /tmp/garmin-deploy-${GITHUB_SHA}/deploy/gcp/deploy-release.sh /tmp/garmin-${GITHUB_SHA}.tar.gz ${GITHUB_SHA}"
       - name: Deployment summary
         run: |
           echo "Deployed commit $GITHUB_SHA to $GCP_VM via IAP." >> "$GITHUB_STEP_SUMMARY"

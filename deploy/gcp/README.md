@@ -14,6 +14,8 @@ Open Actions → **Deploy to GCP** → **Run workflow** → choose `main` → **
 
 The job tests first, then uses GitHub OIDC and Google Workload Identity Federation to impersonate a dedicated deployment service account. Trust is restricted to this repository's numeric owner/repository IDs, main branch, this workflow path, and manual workflow dispatch. Google access is restricted to SSH metadata on the existing VM, project lookup/operation polling, and IAP SSH to its internal address. No long-lived GCP key is stored in GitHub. The GitHub production environment accepts main-branch deployments only.
 
+The VM downloads the immutable public GitHub commit archive over HTTPS and verifies the SHA-256 recorded by the runner. IAP carries only the deployment command. This avoids large SCP uploads through IAP.
+
 A fresh release and virtual environment are staged under `/opt/garmin-releases`. The prior release is preserved. The job switches `/opt/garmin-mcp` only after package validation, restarts the service, checks tunnel readiness and a live Garmin read, and rolls back on verification failure. A brief interruption occurs during restart. `/etc/garmin-mcp` and `/var/lib/garmin-mcp` are preserved, including the private tunnel key, live configuration, and Garmin session. Review disk usage periodically; old releases are retained for rollback.
 
 GitHub permission to change main and manually run this workflow grants production deployment access. Production software can access the saved Garmin session by design, so deploy reviewed code only. Never accept untrusted pull-request code into main without review. No deployment is triggered by `pull_request_target`.

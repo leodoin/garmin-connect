@@ -13,7 +13,7 @@ release="$releases/$revision-$(date -u +%Y%m%dT%H%M%SZ)"
 [[ -f /etc/garmin-mcp/runtime-key && -f /etc/garmin-mcp/tunnel.yaml ]]
 [[ ! -e "$release" ]] || { echo 'This release already exists; use a new commit or inspect the prior attempt.'; exit 1; }
 mkdir -p "$release"
-tar -xzf "$archive" -C "$release"
+tar -xzf "$archive" --strip-components=1 -C "$release"
 python3 -m venv "$release/.venv"
 "$release/.venv/bin/pip" install --no-compile --no-cache-dir --require-hashes -r "$release/deploy/gcp/requirements.txt"
 "$release/.venv/bin/pip" install --no-compile --no-cache-dir --no-deps "$release"
